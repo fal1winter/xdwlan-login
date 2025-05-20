@@ -42,7 +42,7 @@ bash ./install.sh xdwlan-login-x86_64-unknown-linux-gnu.tar.xz
         tar -xf xdwlan-login.tar.xz
         ```
 
-3. 创建配置文件 `~/.config/xdwlan-login/config.yaml`，填入以下内容：
+3. 在程序同目录下创建配置文件 `config.yaml`，填入以下内容：
     ```yaml
     username: "学号"
     password: "密码"
