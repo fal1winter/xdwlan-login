@@ -9,10 +9,14 @@ const NODE_ENV: &str = if cfg!(debug_assertions) {
     "production"
 };
 
+const DEFAULT_LOGIN_URL: &str = "https://w.xidian.edu.cn/index_8.html";
+
 pub struct LoginTask {
     username: String,
     password: String,
     domain: String,
+
+    client: reqwest::blocking::Client,
 }
 
 impl LoginTask {
@@ -21,32 +25,63 @@ impl LoginTask {
             username,
             password,
             domain,
+
+            client: reqwest::blocking::ClientBuilder::new()
+                .no_proxy()
+                .timeout(Duration::from_secs(10)) // Set a timeout to avoid blocking for too long.
+                .build()
+                .unwrap(), // This method only panics if called from within an async runtime.
         }
     }
 
     pub fn is_online(&self) -> bool {
-        let client = reqwest::blocking::ClientBuilder::new()
-            .no_proxy()
-            .build()
-            .unwrap(); // This method only panics if called from within an async runtime.
-        if let Ok(resp) = client.get("http://wifi.vivo.com.cn/generate_204").send() {
-            if resp.status().as_u16() == 204 {
+        match self.client.get("http://baidu.com").send() {
+            Ok(resp) => {
+                // In both online and offline status, the response should be 200 OK.
+                if !resp.status().is_success() {
+                    log::debug!("Offline detected via status: {}", resp.status().as_u16());
+                    return false;
+                }
+
+                let headers = resp.headers();
+                if let Some(server) = headers.get("Server") {
+                    let server = server.to_str().unwrap_or("");
+                    if server.contains("NetEngine Server") {
+                        // If the server is NetEngine Server, it comes from the login portal, which means you are offline.
+                        // Because Baidu uses Apache.
+                        log::debug!("Offline detected via server header: {:?}", server);
+                        return false;
+                    }
+                }
+
+                let body_text = resp.text();
+                if body_text.is_err() {
+                    log::debug!("Offline detected via decoding body: {:?}", body_text);
+                    return false;
+                }
+                let body_text = body_text.unwrap();
+                if body_text.contains("w.xidian.edu.cn") {
+                    // If the body contains "w.xidian.edu.cn", it means you are offline.
+                    log::debug!("Offline detected via body content.");
+                    return false;
+                }
+
+                // In any other cases, it is considered online.
+                log::debug!("All offline detections passed. You are online.");
                 return true;
-            } else {
+            }
+            Err(err) => {
+                log::debug!("Offline detected via error: {:?}", err);
                 return false;
             }
-        } else {
-            return false;
         }
     }
 
     fn get_login_url(&self) -> anyhow::Result<String> {
-        let client = reqwest::blocking::ClientBuilder::new().no_proxy().build()?;
-
         // When you were offline, you will be redirct to the login page.
         // Sometimes, the redirection will fail, so we try at most 5 times.
         for _ in 0..5 {
-            let resp = client.get("http://www.baidu.com").send()?;
+            let resp = self.client.get("http://www.baidu.com").send()?;
             let content = resp.text()?;
             if content.contains("w.xidian.edu.cn") {
                 let re = regex::Regex::new(
@@ -63,8 +98,17 @@ impl LoginTask {
 
     /// Open a browser and login to the network.
     pub fn login(&self) -> anyhow::Result<()> {
-        let url = self.get_login_url()?;
-        log::info!("Got login url: {}", url);
+        let url = match self.get_login_url() {
+            Ok(url) => {
+                log::info!("Got login url: {}", url);
+                url
+            }
+            Err(e) => {
+                log::warn!("Failed to get login url: {}", e);
+                log::warn!("Try using default login url: {}", DEFAULT_LOGIN_URL);
+                DEFAULT_LOGIN_URL.to_string()
+            }
+        };
 
         let program_folder = crate::utils::get_program_folder();
 
@@ -86,7 +130,12 @@ impl LoginTask {
             return Ok(());
         }
 
-        anyhow::bail!("Login process exited with code {}", output.status);
+        anyhow::bail!(
+            "Login process exited with code {}\n Output:{:#?}\n{:#?}",
+            output.status,
+            output.stdout,
+            output.stderr
+        );
     }
 }
 
