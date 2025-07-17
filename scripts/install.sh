@@ -112,7 +112,7 @@ Description=xdwlan-login service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/xdwlan-login
+ExecStart=bash -c 'exec /usr/local/bin/xdwlan-login'
 Restart=on-failure
 
 [Install]
