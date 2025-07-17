@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - ".vscode"
-      - "scripts"
+      - ".vscode/**"
+      - "scripts/**"
       - "README.md"
       - ".env.example"
       - ".gitignore"
@@ -14,8 +14,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - ".vscode"
-      - "scripts"
+      - ".vscode/**"
+      - "scripts/**"
       - "README.md"
       - ".env.example"
       - ".gitignore"
