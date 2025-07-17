@@ -92,9 +92,9 @@ impl Tray {
 
         let tray_icon = TrayIconBuilder::new()
             .with_menu(menu)
-            .with_tooltip("Tray Icon App Tooltip")
+            .with_tooltip("Xidian WLAN Login")
             .with_icon(icon)
-            .with_title("Tray Icon App")
+            .with_title("Xidian WLAN Login")
             .build()?;
 
         self.roi_items = Some(TrayItems {
