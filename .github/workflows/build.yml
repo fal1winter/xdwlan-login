@@ -1,11 +1,19 @@
 name: build
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".vscode"
+      - "scripts"
+      - "README.md"
+      - ".env.example"
+      - ".gitignore"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - ".github"
       - ".vscode"
       - "scripts"
       - "README.md"
