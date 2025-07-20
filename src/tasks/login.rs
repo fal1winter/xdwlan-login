@@ -130,12 +130,12 @@ impl LoginTask {
             return Ok(());
         }
 
-        anyhow::bail!(
-            "Login process exited with code {}\n Output:{:#?}\n{:#?}",
+        Err(anyhow::anyhow!(
+            "Login process exited with code {}\nOutput:{}\n{}",
             output.status,
-            output.stdout,
-            output.stderr
-        );
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ))
     }
 }
 
