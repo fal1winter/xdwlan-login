@@ -131,7 +131,7 @@ impl LoginTask {
         }
 
         Err(anyhow::anyhow!(
-            "Login process exited with code {}\nOutput:{}\n{}",
+            "Login process exited with code {}\nOutput:\n{}\n{}",
             output.status,
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
