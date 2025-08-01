@@ -1,0 +1,16 @@
+[Unit]
+Description=Campus Network Auto Login Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/home/sun/myenv/bin/python /home/sun/pythoncode/xyw2.py
+Restart=always
+RestartSec=10s
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=campus-network
+
+[Install]
+WantedBy=multi-user.target
